@@ -14,12 +14,19 @@ Installation
 copy the file in the archive id:
 
 cp cfg/cfg.d/upload.pl $EPRINTSHOME/archives/<archiveid>/cfg/cfg.d/
+
 cp cfg/cfg.d/document_validate.pl $EPRINTSHOME/archives/<archiveid>/cfg/cfg.d/
+
 mkdir -p $EPRINTSHOME/archives/<archiveid>/cfg/lang/{en,it}
+
 cp cfg/lang/en/phrases/validate_upload_file.xml $EPRINTSHOME/archives/<archiveid>/cfg/lang/en/phrases/
+
 cp cfg/lang/it/phrases/validate_upload_file.xml $EPRINTSHOME/archives/<archiveid>/cfg/lang/it/phrases/
+
 cp cfg/static/javascript/auto/88_uploadmethod_file.js $EPRINTSHOME/archives/<archiveid>/cfg/static/javascript/auto/
+
 mkdir -p $EPRINTSHOME/archives/<archiveid>/cgi/users/ajax
+
 cp cgi/users/ajax/upload_validation $EPRINTSHOME/archives/<archiveid>/cgi/users/ajax/
 
 reload apache
