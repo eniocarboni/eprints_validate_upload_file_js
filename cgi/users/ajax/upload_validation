@@ -1,0 +1,73 @@
+use diagnostics;
+use EPrints;
+
+use strict;
+
+# Make sure we don't accidentally start another progress for this request
+my $session = new EPrints::Session;
+if( ! $session ){
+	$session->not_found( "Session problems" );
+	$session->terminate;
+	exit(0);
+}
+my $fileid=$session->param('fileid');
+my $user=$session->current_user;
+
+if( ! $user ){
+	$session->not_found( "You must authenticate before" );
+	$session->terminate;
+	exit(0);
+}
+if( ! $fileid ){
+	$session->not_found( "file not found" );
+	$session->terminate;
+	exit(0);
+}
+my $file=new EPrints::DataObj::File( $session, $fileid );
+if( !defined $file ) {
+	$session->not_found( "file not found" );
+	$session->terminate;
+	exit(0);
+}
+
+my $doc=new EPrints::DataObj::Document( $session, $file->get_value('objectid') );
+if( !defined $doc ) {
+	$session->not_found( "document not found" );
+	$session->terminate;
+	exit(0);
+}
+my $ep=new EPrints::DataObj::EPrint( $session, $doc->get_value('eprintid') );
+if( !defined $ep ) {
+	$session->not_found( "eprint not found" );
+	$session->terminate;
+	exit(0);
+}
+if (! $user->allow("eprint/edit",$ep) ) {
+	$session->not_found( "No rights to validate file un this eprint" );
+	$session->terminate;
+	exit(0);
+}
+my @problems=();
+my $json='';
+if ($session->can_call('upload_file')) {
+	@problems=$session->call('upload_file', $session,$file,1 );
+}
+if (@problems) {
+	$json=qq|{"status": "not ok", "problems":|.EPrints::Utils::js_string(join("\n",@problems)) .qq|}|;
+}
+else {
+	$json=qq|{"status": "ok", "problems": ""}|;
+}
+
+my $r = $session->get_request;
+
+$r->headers_out->set( 'Vary' => 'Accept' );
+$r->headers_out->set( 'Pragma'        => 'no-cache' );
+$r->headers_out->set( 'Expires'       => 'Thu, 01 Jan 1970 00:00:00 GMT' );
+$r->headers_out->set( 'Cache-Control' => 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0' );
+
+$r->content_type( "application/json; charset=utf-8" );
+$r->set_content_length( length $json );
+$r->write( $json );
+
+$session->terminate;
